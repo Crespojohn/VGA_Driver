@@ -1,5 +1,4 @@
 library ieee;
-library defaultlib;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use IEEE.math_real.all;
@@ -28,13 +27,13 @@ begin
     end if;
   end process;
 
-  vga_sync_controller_i: entity defaultlib.vga_sync_controller 
+  vga_sync_controller_i: entity work.vga_sync_controller
   port map (
     clk_i       => clk,
     rst_i       => reset,
     hsync_o     => hsync,
     vsync_o     => vsync,
-    pixel_clk_o => '0',
+  --pixel_clk_o => '0',
     pixel_en_o  => pixel_en_r
   );
   

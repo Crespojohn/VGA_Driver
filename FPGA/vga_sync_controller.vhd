@@ -68,7 +68,7 @@ begin
         vsync_counter_r <= (others => '0');
       end if;
 
-      if(hsync_counter_r >= G_DISPLAY_RANGE_X and vsync_counter_r >= G_DISPLAY_RANGE_Y) then
+      if(hsync_counter_r <= G_DISPLAY_RANGE_X and vsync_counter_r <= G_DISPLAY_RANGE_Y) then
         pixel_en_o <= '1';
       end if;
     end if;
