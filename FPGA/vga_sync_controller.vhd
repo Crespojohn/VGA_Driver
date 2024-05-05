@@ -41,6 +41,7 @@ architecture rtl of vga_sync_controller is
   signal vsync_counter_r :unsigned(integer(ceil(log2(real(integer(VSYNC_MAX))))) downto 0) := (others => '0');
   signal pixel_clk_r     :std_logic := '0';
   signal pixel_counter_r :unsigned(1 downto 0) := (others => '0');
+  signal end_of_screen   :std_logic := '0';
 begin   
 
   pixel_clk_i: process(clk_i)
@@ -57,32 +58,46 @@ begin
   pixel_enable_i: process(pixel_clk_r)
   begin
     if(rising_edge(pixel_clk_r)) then
+    end_of_screen <= '0';
       hsync_counter_r <= hsync_counter_r + 1;
-      vsync_counter_r <= vsync_counter_r + 1;
+      if(x < G_DISPLAY_RANGE_X - 1) then
+        x <= x + 1;
+      end if;
+
+      if(hsync_counter_r = HSYNC_MAX) then
+        vsync_counter_r <= vsync_counter_r + 1;
+        if(y < G_DISPLAY_RANGE_Y - 1) then
+          y <= y + 1;
+        end if;
+      end if;
       pixel_en_o <= '0';
       if(hsync_counter_r >= HSYNC_MAX) then
         hsync_counter_r <= (others => '0');
+        x <= (others => '0'); --Reset x when screen line is updated
       end if;
 
-      if(vsync_counter_r >= VSYNC_MAX) then
+      if(vsync_counter_r >= VSYNC_MAX+1) then
+        end_of_screen <= '1';
         vsync_counter_r <= (others => '0');
+        y <= (others => '0'); --Reset y when screen is done full wrap
       end if;
 
-      if(hsync_counter_r <= G_DISPLAY_RANGE_X and vsync_counter_r <= G_DISPLAY_RANGE_Y) then
+      if(hsync_counter_r <= G_DISPLAY_RANGE_X - 1 and vsync_counter_r <= G_DISPLAY_RANGE_Y - 1) then
         pixel_en_o <= '1';
       end if;
+
     end if;
   end process;
 
   process (all)
   begin
-    hsync_o <= '1';
-    vsync_o <= '1';
+    hsync_o <= '0';
+    vsync_o <= '0';
     if(hsync_counter_r >= START_H_TRACE and hsync_counter_r <= STOP_H_TRACE) then
-      hsync_o <= '0';
+      hsync_o <= '1';
     end if;
     if(vsync_counter_r >= START_V_TRACE and vsync_counter_r <= STOP_V_TRACE) then
-      vsync_o <= '0';
+      vsync_o <= '1';
     end if;
     pixel_clk_o <= pixel_clk_r;
   end process;
